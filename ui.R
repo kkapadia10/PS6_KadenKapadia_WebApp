@@ -34,7 +34,6 @@ ui <- fluidPage(
     tabPanel("Plot",
              sidebarLayout(
                sidebarPanel(
-                 textOutput("plot_summary"),
                  selectInput("model",
                              "Select Car Model:",
                              choices = unique(car_data$Model)),
@@ -43,7 +42,8 @@ ui <- fluidPage(
                                               "blue","purple"))
                  ),
                mainPanel(
-                 plotOutput("plot")
+                 plotOutput("plot"),
+                 textOutput("plot_summary")
                  )
                )
              ),
@@ -90,8 +90,18 @@ server <- function(input, output){
       filter(!grepl('Not available', Mileage)) %>% 
       filter(Model == input$model)
     n_total <- nrow(model_data)
-    paste0("There are ", n_total, " " , input$model, "s that have available data.")
+    if (is.na(max(model_data$Price)) || is.na(min(model_data$Price)) || is.na(max(model_data$Mileage)))
+    {
+      paste0("There are ", n_total, " " , input$model, "s that have available data.")
+    }
+    else
+    {
+      paste0("There are ", n_total, " " , input$model, "s that have available data. ",
+             "The most expensive one costs ", max(model_data$Price), " and the cheapest one costs ", min(model_data$Price), 
+             ". The ", input$model, " with the highest mileage has driven ", max(model_data$Mileage))
+    }
   })
+  
   
   output$table <- renderDataTable({
     car_data %>% 
