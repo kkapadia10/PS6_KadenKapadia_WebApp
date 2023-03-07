@@ -16,16 +16,19 @@ car_data <- read_delim("car_data.csv")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-  mainPanel(
-    HTML("<h1>Welcome to the Used and New Car Dataset</h1>
-        <p> This web app shows information regarding <em> various car data from", min(car_data$Year), "to", max(car_data$Year), "</em></p>
-        <p> There are <strong>", nrow(car_data), "</strong> observations and <strong>", ncol(car_data), "</strong> variables we will be looking at in this dataset."
-    ),
-  ),
-  
+  titlePanel("Used and New Car Data"),
   tabsetPanel(
-    tabPanel("Background Information",
-             textOutput("car_data_info")
+    tabPanel("Welcome",
+             h2("Welcome to the Used and New Car Dataset"),
+             h4("In this dataset, there are over 100,000 cars for you to look at to figure out
+                which car fits your needs perfectly!"),
+             p("This web app shows information regarding", em("various car data from", min(car_data$Year), "to", max(car_data$Year))),
+             p("There are", strong(format(nrow(car_data), big.mark = ","), "cars and", ncol(car_data), "variables") , "we will be looking at in this dataset."),
+             p("This data consists of several variables necessary for buyers to look at before buying cars, such as the",
+               em("Model, Year, Status, Mileage, Price, and MSRP.")),
+             p("This data is found on", strong("Kaggle"), "and was updated by", strong("George Baffour.")),
+             h5("Below is a", em("random sample of 10 car data values:")),
+             dataTableOutput("welcome_table"),
              ),
     
     tabPanel("Plot",
@@ -34,7 +37,10 @@ ui <- fluidPage(
                  textOutput("plot_summary"),
                  selectInput("model",
                              "Select Car Model:",
-                             choices = unique(car_data$Model))
+                             choices = unique(car_data$Model)),
+                 radioButtons("color", "Pick a color",
+                             choices = c("red", "orange", "green",
+                                              "blue","purple"))
                  ),
                mainPanel(
                  plotOutput("plot")
@@ -61,8 +67,9 @@ ui <- fluidPage(
 
 server <- function(input, output){
   
-  output$car_data_info <- renderText({
-    "This data consists of several variables necessary for buyers to look at before buying cars, such as the Model, Year, Status, Mileage, Price, and MSRP."
+  output$welcome_table <- renderDataTable({
+    car_data %>% 
+      sample_n(10)
   })
   
   output$plot <- renderPlot({
@@ -73,7 +80,7 @@ server <- function(input, output){
              Price = as.numeric(str_replace_all(Price, "[^[:digit:]]", ""))) %>%
       na.omit() %>% 
       ggplot(aes(x = as.integer(gsub(" mi.", "", Mileage)), y = as.integer(gsub("$", "", Price)))) +
-      geom_point() +
+      geom_point(col = input$color) +
       labs(x = "Mileage of Car (in miles)", y = "Price of Car (in $)", title = "Car Price vs Mileage")
     model_data
   })
